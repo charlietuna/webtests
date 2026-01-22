@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autofill Test Forms</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .form-container {
+            background-color: white;
+            padding: 30px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        h2 {
+            color: #555;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #666;
+            font-weight: bold;
+        }
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>Autofill Test Forms</h1>
+
+    <!-- Credit Card Form -->
+    <div class="form-container">
+        <h2>Credit Card Form</h2>
+        <form id="creditCardForm">
+            <div class="form-group">
+                <label for="cc-name">Cardholder Name</label>
+                <input type="text" id="cc-name" name="cc-name" autocomplete="cc-name" placeholder="John Doe">
+            </div>
+            <div class="form-group">
+                <label for="cc-number">Card Number</label>
+                <input type="text" id="cc-number" name="cc-number" autocomplete="cc-number" placeholder="1234 5678 9012 3456">
+            </div>
+            <div class="form-group">
+                <label for="cc-address">Billing Address</label>
+                <input type="text" id="cc-address" name="cc-address" autocomplete="street-address" placeholder="123 Main Street">
+            </div>
+            <div class="form-group">
+                <label for="cc-zip">Zip Code</label>
+                <input type="text" id="cc-zip" name="cc-zip" autocomplete="postal-code" placeholder="12345">
+            </div>
+            <div class="form-group">
+                <label for="cc-csc">Security Code (CVV)</label>
+                <input type="text" id="cc-csc" name="cc-csc" autocomplete="cc-csc" placeholder="123">
+            </div>
+            <button type="submit">Submit Payment</button>
+        </form>
+    </div>
+
+    <!-- Account Registration Form -->
+    <div class="form-container">
+        <h2>Account Registration Form</h2>
+        <form id="registrationForm">
+            <div class="form-group">
+                <label for="reg-name">Full Name</label>
+                <input type="text" id="reg-name" name="name" autocomplete="name" placeholder="John Doe">
+            </div>
+            <div class="form-group">
+                <label for="reg-address">Address</label>
+                <input type="text" id="reg-address" name="address" autocomplete="street-address" placeholder="123 Main Street">
+            </div>
+            <div class="form-group">
+                <label for="reg-phone">Phone Number</label>
+                <input type="tel" id="reg-phone" name="phone" autocomplete="tel" placeholder="(555) 123-4567">
+            </div>
+            <div class="form-group">
+                <label for="reg-email">Email Address</label>
+                <input type="email" id="reg-email" name="email" autocomplete="email" placeholder="john.doe@example.com">
+            </div>
+            <button type="submit">Register Account</button>
+        </form>
+    </div>
+
+    <!-- Account Sign Up Form -->
+    <div class="form-container">
+        <h2>Account Sign Up Form</h2>
+        <form id="signupForm">
+            <div class="form-group">
+                <label for="signup-username">Username</label>
+                <input type="text" id="signup-username" name="username" autocomplete="username" placeholder="johndoe123">
+            </div>
+            <div class="form-group">
+                <label for="signup-password">Password</label>
+                <input type="password" id="signup-password" name="password" autocomplete="new-password" placeholder="Enter password">
+            </div>
+            <div class="form-group">
+                <label for="signup-confirm">Confirm Password</label>
+                <input type="password" id="signup-confirm" name="confirm-password" autocomplete="new-password" placeholder="Re-enter password">
+            </div>
+            <button type="submit">Create Account</button>
+        </form>
+    </div>
+
+    <script>
+        // Prevent actual form submission for testing purposes
+        document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                alert('Form submitted (prevented for testing)');
+            });
+        });
+    </script>
+</body>
+</html>
