@@ -76,17 +76,55 @@
   }
   #toolbar a:hover { text-decoration: underline; }
   #toolbar .toolbar-right { float: right; }
-  #toolbar.auto-hidden {
+
+  /* Search bar */
+  #searchbar {
+    display: none;
+    position: fixed;
+    top: 10px;
+    left: 0;
+    right: 0;
+    z-index: 9998;
+    background: #f5f5f7;
+    border-top: 1px solid #d0d0d0;
+    border-bottom: 1px solid #d0d0d0;
+    padding: 10px 24px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s ease;
   }
-  #toolbar.auto-visible {
+  #searchbar.visible {
     opacity: 1;
     pointer-events: auto;
-    top: 10px;
-    transition: opacity 0.3s ease;
   }
+  #searchbar .search-inner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  #searchbar .search-icon {
+    color: rgba(0,0,0,0.35);
+    flex-shrink: 0;
+    font-size: 0.95rem;
+  }
+  #searchbar input {
+    flex: 1;
+    border: 1px solid #d0d0d0;
+    border-radius: 6px;
+    outline: none;
+    font-size: 0.95rem;
+    font-family: inherit;
+    color: #333;
+    background: #fff;
+    padding: 6px 10px;
+  }
+  #searchbar input:focus {
+    border-color: #999;
+  }
+  #searchbar input::placeholder { color: rgba(0,0,0,0.35); }
 
   /* Bottom banner */
   #banner-bottom {
@@ -262,6 +300,13 @@
   <span class="toolbar-right">Sign In</span>
 </div>
 
+<div id="searchbar">
+  <div class="search-inner">
+    <span class="search-icon">&#x1F50D;</span>
+    <input type="text" placeholder="Search articles, photos, and more...">
+  </div>
+</div>
+
 <div id="banner">
   This site uses cookies to improve your experience. By continuing to browse you agree to our privacy policy.
 </div>
@@ -286,8 +331,8 @@
     </div>
     <div class="toggle-row">
       <div>
-        <div class="toggle-label">Auto-show Toolbar</div>
-        <div class="toggle-desc">Show toolbar when scrolling down</div>
+        <div class="toggle-label">Search Bar</div>
+        <div class="toggle-desc">Auto-show search bar when scrolling down</div>
       </div>
       <label class="switch"><input type="checkbox" id="tog-toolbar-auto"><span class="slider"></span></label>
     </div>
@@ -407,17 +452,18 @@
   }
 
   const toolbar = document.getElementById('toolbar');
+  const searchbar = document.getElementById('searchbar');
   const banner = document.getElementById('banner');
   const bannerBottom = document.getElementById('banner-bottom');
   const togToolbar = document.getElementById('tog-toolbar');
-  const togToolbarAuto = document.getElementById('tog-toolbar-auto');
+  const togSearchbar = document.getElementById('tog-toolbar-auto');
   const togBannerTop = document.getElementById('tog-banner-top');
   const togBannerBottom = document.getElementById('tog-banner-bottom');
 
   // Init from URL
   const params = new URLSearchParams(window.location.search);
   togToolbar.checked = params.has('toolbar');
-  togToolbarAuto.checked = params.has('toolbar-auto');
+  togSearchbar.checked = params.has('searchbar');
   togBannerTop.checked = params.has('banner-top') || params.get('banner') === 'top';
   togBannerBottom.checked = params.has('banner-bottom') || params.get('banner') === 'bottom';
 
@@ -425,7 +471,7 @@
     // Update URL
     const p = new URLSearchParams();
     if (togToolbar.checked) p.set('toolbar', '');
-    if (togToolbarAuto.checked) p.set('toolbar-auto', '');
+    if (togSearchbar.checked) p.set('searchbar', '');
     if (togBannerTop.checked) p.set('banner-top', '');
     if (togBannerBottom.checked) p.set('banner-bottom', '');
     const qs = p.toString().replace(/=(?=&|$)/g, '');
@@ -433,17 +479,14 @@
 
     // Reset
     toolbar.style.display = 'none';
-    toolbar.className = '';
+    searchbar.style.display = 'none';
+    searchbar.classList.remove('visible');
     banner.style.display = 'none';
     banner.style.top = '';
     banner.className = '';
     bannerBottom.style.display = 'none';
     document.body.style.paddingTop = '';
     document.body.style.paddingBottom = '';
-
-    // Toolbar auto disables manual toolbar
-    if (togToolbarAuto.checked) togToolbar.checked = false;
-    if (togToolbar.checked) togToolbarAuto.checked = false;
 
     let topOffset = 0;
 
@@ -453,9 +496,10 @@
       document.body.style.paddingTop = topOffset + 'px';
     }
 
-    if (togToolbarAuto.checked) {
-      toolbar.style.display = 'block';
-      toolbar.classList.add('auto-hidden');
+    if (togSearchbar.checked) {
+      searchbar.style.display = 'block';
+      // Visibility controlled by scroll handler
+      updateSearchbar();
     }
 
     if (togBannerTop.checked) {
@@ -471,23 +515,20 @@
     }
   }
 
-  // Scroll-based toolbar auto-show
-  window.addEventListener('scroll', function() {
-    if (!togToolbarAuto.checked) return;
-    const currentY = window.scrollY;
-    if (currentY > 100) {
-      toolbar.classList.remove('auto-hidden');
-      toolbar.classList.add('auto-visible');
-      banner.style.top = toolbar.offsetHeight + 'px';
+  function updateSearchbar() {
+    if (!togSearchbar.checked) return;
+    if (window.scrollY > 100) {
+      searchbar.classList.add('visible');
     } else {
-      toolbar.classList.remove('auto-visible');
-      toolbar.classList.add('auto-hidden');
-      banner.style.top = '0';
+      searchbar.classList.remove('visible');
     }
-  });
+  }
+
+  // Scroll-based search bar auto-show
+  window.addEventListener('scroll', updateSearchbar);
 
   togToolbar.addEventListener('change', apply);
-  togToolbarAuto.addEventListener('change', apply);
+  togSearchbar.addEventListener('change', apply);
   togBannerTop.addEventListener('change', apply);
   togBannerBottom.addEventListener('change', apply);
   apply();
