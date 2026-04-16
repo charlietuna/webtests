@@ -63,9 +63,9 @@
     left: 0;
     right: 0;
     z-index: 9998;
-    background: #333;
+    background: #5a1a2a;
     color: #fff;
-    padding: 10px 24px;
+    padding: 12px 24px;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-size: 0.9rem;
   }
@@ -76,6 +76,14 @@
   }
   #toolbar a:hover { text-decoration: underline; }
   #toolbar .toolbar-right { float: right; }
+  #toolbar.auto-hidden {
+    transform: translateY(-100%);
+    transition: transform 0.3s ease;
+  }
+  #toolbar.auto-visible {
+    transform: translateY(0);
+    transition: transform 0.3s ease;
+  }
 
   /* Bottom banner */
   #banner-bottom {
@@ -275,6 +283,13 @@
     </div>
     <div class="toggle-row">
       <div>
+        <div class="toggle-label">Auto-show Toolbar</div>
+        <div class="toggle-desc">Show toolbar when scrolling down</div>
+      </div>
+      <label class="switch"><input type="checkbox" id="tog-toolbar-auto"><span class="slider"></span></label>
+    </div>
+    <div class="toggle-row">
+      <div>
         <div class="toggle-label">Top Banner</div>
         <div class="toggle-desc">Promotional banner fixed to top</div>
       </div>
@@ -392,12 +407,14 @@
   const banner = document.getElementById('banner');
   const bannerBottom = document.getElementById('banner-bottom');
   const togToolbar = document.getElementById('tog-toolbar');
+  const togToolbarAuto = document.getElementById('tog-toolbar-auto');
   const togBannerTop = document.getElementById('tog-banner-top');
   const togBannerBottom = document.getElementById('tog-banner-bottom');
 
   // Init from URL
   const params = new URLSearchParams(window.location.search);
   togToolbar.checked = params.has('toolbar');
+  togToolbarAuto.checked = params.has('toolbar-auto');
   togBannerTop.checked = params.has('banner-top') || params.get('banner') === 'top';
   togBannerBottom.checked = params.has('banner-bottom') || params.get('banner') === 'bottom';
 
@@ -405,6 +422,7 @@
     // Update URL
     const p = new URLSearchParams();
     if (togToolbar.checked) p.set('toolbar', '');
+    if (togToolbarAuto.checked) p.set('toolbar-auto', '');
     if (togBannerTop.checked) p.set('banner-top', '');
     if (togBannerBottom.checked) p.set('banner-bottom', '');
     const qs = p.toString().replace(/=(?=&|$)/g, '');
@@ -412,6 +430,7 @@
 
     // Reset
     toolbar.style.display = 'none';
+    toolbar.className = '';
     banner.style.display = 'none';
     banner.style.top = '';
     banner.className = '';
@@ -419,12 +438,21 @@
     document.body.style.paddingTop = '';
     document.body.style.paddingBottom = '';
 
+    // Toolbar auto disables manual toolbar
+    if (togToolbarAuto.checked) togToolbar.checked = false;
+    if (togToolbar.checked) togToolbarAuto.checked = false;
+
     let topOffset = 0;
 
     if (togToolbar.checked) {
       toolbar.style.display = 'block';
       topOffset = toolbar.offsetHeight;
       document.body.style.paddingTop = topOffset + 'px';
+    }
+
+    if (togToolbarAuto.checked) {
+      toolbar.style.display = 'block';
+      toolbar.classList.add('auto-hidden');
     }
 
     if (togBannerTop.checked) {
@@ -440,7 +468,23 @@
     }
   }
 
+  // Scroll-based toolbar auto-show
+  window.addEventListener('scroll', function() {
+    if (!togToolbarAuto.checked) return;
+    const currentY = window.scrollY;
+    if (currentY > 100) {
+      toolbar.classList.remove('auto-hidden');
+      toolbar.classList.add('auto-visible');
+      banner.style.top = toolbar.offsetHeight + 'px';
+    } else {
+      toolbar.classList.remove('auto-visible');
+      toolbar.classList.add('auto-hidden');
+      banner.style.top = '0';
+    }
+  });
+
   togToolbar.addEventListener('change', apply);
+  togToolbarAuto.addEventListener('change', apply);
   togBannerTop.addEventListener('change', apply);
   togBannerBottom.addEventListener('change', apply);
   apply();
