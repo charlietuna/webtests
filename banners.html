@@ -183,6 +183,62 @@
   }
   .switch input:checked + .slider { background: #1a73e8; }
   .switch input:checked + .slider::before { transform: translateX(20px); }
+
+  /* Featured section */
+  .featured {
+    background: #241343;
+    color: #fff;
+    padding: 72px 32px;
+    margin: 2em 0;
+  }
+  .featured-inner {
+    max-width: 960px;
+    margin: 0 auto;
+  }
+  .featured h2 {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 8px;
+  }
+  .featured h3 {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 1.8rem;
+    font-weight: 300;
+    line-height: 1.3;
+    margin-bottom: 12px;
+  }
+  .featured p {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: rgba(255,255,255,0.75);
+    margin-bottom: 0;
+  }
+  .featured-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 32px;
+  }
+  .featured-card img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 6px;
+  }
+  .featured-card .caption {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.6);
+    margin-top: 10px;
+  }
+  @media (max-width: 600px) {
+    .featured-grid { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
 <body>
@@ -253,7 +309,27 @@
     <img src="https://picsum.photos/id/240/720/480" alt="Dark mountain landscape at dusk" width="720" height="480">
     <figcaption>The mountains at dusk — large areas of shadow and dark rock</figcaption>
   </figure>
+</article>
 
+<section class="featured">
+  <div class="featured-inner">
+    <h2>Featured Collection</h2>
+    <h3>The Quiet Hours Between Dusk and Dawn</h3>
+    <p>A curated pair from our archives — moments captured in the liminal space where daylight surrenders to darkness and the world takes on a different character entirely.</p>
+    <div class="featured-grid">
+      <div class="featured-card">
+        <img src="https://picsum.photos/id/119/480/320" alt="Calm waters at sunset" width="480" height="320">
+        <div class="caption">Golden hour on open water — warm tones fading into shadow</div>
+      </div>
+      <div class="featured-card">
+        <img src="https://picsum.photos/id/250/480/320" alt="Dark forest canopy" width="480" height="320">
+        <div class="caption">Deep canopy cover where little light reaches the forest floor</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<article>
   <p>The ridge offered a panoramic view that made every step worthwhile. To the east, the sun was just cresting the horizon, painting the clouds in shades of amber and rose. To the west, the peaks stood in sharp silhouette against the fading night sky. It was a moment of perfect balance between darkness and light, between the world waking and the world still dreaming.</p>
 
   <figure>
@@ -282,7 +358,28 @@
     <figcaption>Emerging from shadow into light — a recurring theme on the trail</figcaption>
   </figure>
 
+  <p>The road home wound through farmland, flat and open after the verticality of the mountains. Fields of wheat swayed in the afternoon breeze, catching the light in waves that rippled toward the horizon. A barn stood alone against the sky, its red paint faded to the colour of old brick. There was a loneliness to the landscape, but not an unhappy one — the kind of solitude that invites reflection rather than sadness.</p>
+
+  <figure>
+    <img src="https://picsum.photos/id/110/720/480" alt="Open road through countryside" width="720" height="480">
+    <figcaption>The long road through open country — light and space</figcaption>
+  </figure>
+
+  <p>We stopped once more, at a bridge over a narrow river, and watched the water move beneath us. It carried leaves and small branches, each one spinning slowly in the current before disappearing downstream. The water was dark and clear, reflecting the sky above and the trees that lined its banks. A kingfisher darted past, a flash of electric blue against the muted greens and browns.</p>
+
+  <figure>
+    <img src="https://picsum.photos/id/142/720/480" alt="River winding through trees" width="720" height="480">
+    <figcaption>Still waters running through the valley</figcaption>
+  </figure>
+
   <p>That is, perhaps, the quiet lesson of any walk through the natural world: the destination matters less than the willingness to go. The mountain does not care whether you reach the summit. It only asks that you show up, pay attention, and let the world unfold at its own pace.</p>
+
+  <figure>
+    <img src="https://picsum.photos/id/167/720/480" alt="Silhouette against evening sky" width="720" height="480">
+    <figcaption>Evening silhouettes — the day's last light</figcaption>
+  </figure>
+
+  <p>And so we drove on, the mountains shrinking in the mirror, the sky deepening to violet, the first stars beginning to appear. The day was behind us now, folded away like a map we no longer needed. But the trail would be there tomorrow, and the day after, and the day after that. The mountain is patient. It has nowhere else to be.</p>
 </article>
 
 <script>
