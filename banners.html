@@ -76,6 +76,113 @@
   }
   #toolbar a:hover { text-decoration: underline; }
   #toolbar .toolbar-right { float: right; }
+
+  /* Bottom banner */
+  #banner-bottom {
+    display: none;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    background: #1a73e8;
+    color: #fff;
+    padding: 14px 24px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 0.95rem;
+    text-align: center;
+  }
+
+  /* Settings toggle button */
+  #settings-toggle {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 20px 20px 0;
+  }
+  #settings-toggle button {
+    background: none;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 0.85rem;
+    color: #555;
+    cursor: pointer;
+  }
+  #settings-toggle button:hover { background: #f0f0f0; }
+
+  /* Settings panel */
+  #settings {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 12px 20px 20px;
+    display: none;
+  }
+  #settings .panel {
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 20px 24px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  #settings h2 {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #888;
+    margin-bottom: 16px;
+  }
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+  }
+  .toggle-row + .toggle-row {
+    border-top: 1px solid #e8e8e8;
+  }
+  .toggle-label {
+    font-size: 0.95rem;
+    color: #333;
+  }
+  .toggle-desc {
+    font-size: 0.8rem;
+    color: #999;
+    margin-top: 2px;
+  }
+
+  /* Toggle switch */
+  .switch {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    flex-shrink: 0;
+    margin-left: 16px;
+  }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .switch .slider {
+    position: absolute;
+    inset: 0;
+    background: #ccc;
+    border-radius: 24px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .switch .slider::before {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    left: 3px;
+    bottom: 3px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.2s;
+  }
+  .switch input:checked + .slider { background: #1a73e8; }
+  .switch input:checked + .slider::before { transform: translateX(20px); }
 </style>
 </head>
 <body>
@@ -90,6 +197,41 @@
 
 <div id="banner">
   This site uses cookies to improve your experience. By continuing to browse you agree to our privacy policy.
+</div>
+
+<div id="banner-bottom">
+  Subscribe to our newsletter for weekly updates on nature and photography.
+</div>
+
+<div id="settings-toggle">
+  <button onclick="toggleSettings()">Settings</button>
+</div>
+
+<div id="settings">
+  <div class="panel">
+    <h2>Display Settings</h2>
+    <div class="toggle-row">
+      <div>
+        <div class="toggle-label">Toolbar</div>
+        <div class="toggle-desc">Fixed navigation bar at the top</div>
+      </div>
+      <label class="switch"><input type="checkbox" id="tog-toolbar"><span class="slider"></span></label>
+    </div>
+    <div class="toggle-row">
+      <div>
+        <div class="toggle-label">Top Banner</div>
+        <div class="toggle-desc">Promotional banner fixed to top</div>
+      </div>
+      <label class="switch"><input type="checkbox" id="tog-banner-top"><span class="slider"></span></label>
+    </div>
+    <div class="toggle-row">
+      <div>
+        <div class="toggle-label">Bottom Banner</div>
+        <div class="toggle-desc">Cookie/subscribe banner fixed to bottom</div>
+      </div>
+      <label class="switch"><input type="checkbox" id="tog-banner-bottom"><span class="slider"></span></label>
+    </div>
+  </div>
 </div>
 
 <article>
@@ -144,30 +286,67 @@
 </article>
 
 <script>
-  const params = new URLSearchParams(window.location.search);
-  const mode = params.get('banner');
-  const banner = document.getElementById('banner');
-  const toolbar = document.getElementById('toolbar');
-  const showToolbar = params.has('toolbar');
-
-  let topOffset = 0;
-
-  if (showToolbar) {
-    toolbar.style.display = 'block';
-    topOffset = toolbar.offsetHeight;
-    document.body.style.paddingTop = topOffset + 'px';
+  const settings = document.getElementById('settings');
+  function toggleSettings() {
+    settings.style.display = settings.style.display === 'block' ? 'none' : 'block';
   }
 
-  if (mode === 'top' || mode === 'bottom') {
-    banner.style.display = 'block';
-    banner.classList.add(mode);
-    if (mode === 'top') {
+  const toolbar = document.getElementById('toolbar');
+  const banner = document.getElementById('banner');
+  const bannerBottom = document.getElementById('banner-bottom');
+  const togToolbar = document.getElementById('tog-toolbar');
+  const togBannerTop = document.getElementById('tog-banner-top');
+  const togBannerBottom = document.getElementById('tog-banner-bottom');
+
+  // Init from URL
+  const params = new URLSearchParams(window.location.search);
+  togToolbar.checked = params.has('toolbar');
+  togBannerTop.checked = params.has('banner-top') || params.get('banner') === 'top';
+  togBannerBottom.checked = params.has('banner-bottom') || params.get('banner') === 'bottom';
+
+  function apply() {
+    // Update URL
+    const p = new URLSearchParams();
+    if (togToolbar.checked) p.set('toolbar', '');
+    if (togBannerTop.checked) p.set('banner-top', '');
+    if (togBannerBottom.checked) p.set('banner-bottom', '');
+    const qs = p.toString().replace(/=(?=&|$)/g, '');
+    history.replaceState(null, '', qs ? '?' + qs : location.pathname);
+
+    // Reset
+    toolbar.style.display = 'none';
+    banner.style.display = 'none';
+    banner.style.top = '';
+    banner.className = '';
+    bannerBottom.style.display = 'none';
+    document.body.style.paddingTop = '';
+    document.body.style.paddingBottom = '';
+
+    let topOffset = 0;
+
+    if (togToolbar.checked) {
+      toolbar.style.display = 'block';
+      topOffset = toolbar.offsetHeight;
+      document.body.style.paddingTop = topOffset + 'px';
+    }
+
+    if (togBannerTop.checked) {
+      banner.style.display = 'block';
+      banner.classList.add('top');
       banner.style.top = topOffset + 'px';
       document.body.style.paddingTop = (topOffset + banner.offsetHeight) + 'px';
-    } else {
-      document.body.style.paddingBottom = banner.offsetHeight + 'px';
+    }
+
+    if (togBannerBottom.checked) {
+      bannerBottom.style.display = 'block';
+      document.body.style.paddingBottom = bannerBottom.offsetHeight + 'px';
     }
   }
+
+  togToolbar.addEventListener('change', apply);
+  togBannerTop.addEventListener('change', apply);
+  togBannerBottom.addEventListener('change', apply);
+  apply();
 </script>
 </body>
 </html>
