@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Banner Test Page</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Georgia, 'Times New Roman', serif;
+    line-height: 1.7;
+    color: #222;
+    background: #fff;
+  }
+  article {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 40px 20px 80px;
+  }
+  h1 { font-size: 2.2rem; margin-bottom: 0.4em; line-height: 1.2; }
+  .byline { color: #666; font-size: 0.9rem; margin-bottom: 2em; }
+  p { margin-bottom: 1.4em; }
+  figure {
+    margin: 2em -20px;
+    text-align: center;
+  }
+  figure img {
+    width: 100%;
+    max-width: 720px;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+  }
+  figcaption {
+    font-size: 0.85rem;
+    color: #888;
+    margin-top: 0.5em;
+    padding: 0 20px;
+  }
+
+  /* Banner */
+  #banner {
+    display: none;
+    position: fixed;
+    left: 0;
+    right: 0;
+    z-index: 9999;
+    background: #1a73e8;
+    color: #fff;
+    padding: 14px 24px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 0.95rem;
+    text-align: center;
+  }
+  #banner.top { top: 0; }
+  #banner.bottom { bottom: 0; }
+
+  /* Toolbar */
+  #toolbar {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 9998;
+    background: #333;
+    color: #fff;
+    padding: 10px 24px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 0.9rem;
+  }
+  #toolbar a {
+    color: #fff;
+    text-decoration: none;
+    margin-right: 20px;
+  }
+  #toolbar a:hover { text-decoration: underline; }
+  #toolbar .toolbar-right { float: right; }
+</style>
+</head>
+<body>
+
+<div id="toolbar">
+  <a href="#">Home</a>
+  <a href="#">Articles</a>
+  <a href="#">Photos</a>
+  <a href="#">About</a>
+  <span class="toolbar-right">Sign In</span>
+</div>
+
+<div id="banner">
+  This site uses cookies to improve your experience. By continuing to browse you agree to our privacy policy.
+</div>
+
+<article>
+  <h1>A Walk Through the Natural World</h1>
+  <p class="byline">Published April 15, 2026 &middot; 4 min read</p>
+
+  <p>The morning fog clung to the valley floor as the first rays of sunlight pierced through the canopy overhead. It was one of those mornings where the world felt entirely new, as though every leaf and blade of grass had been placed with deliberate care by some unseen hand. The trail wound upward through dense forest, the earth soft and dark beneath our boots.</p>
+
+  <figure>
+    <img src="https://picsum.photos/id/15/720/480" alt="A misty forest path" width="720" height="480">
+    <figcaption>Early morning light filters through the canopy — Photo: Lorem Picsum</figcaption>
+  </figure>
+
+  <p>We had set out before dawn, hoping to catch the golden hour from the ridge above the lake. The air was crisp, carrying the scent of pine and damp earth. Somewhere in the distance, a woodpecker hammered away at a dead trunk, its rhythmic percussion echoing through the stillness. The forest was alive with quiet activity, each creature tending to its morning routine.</p>
+
+  <p>As we climbed higher, the trees thinned and the landscape opened up. The valley below was still wrapped in mist, a soft white blanket that concealed the river and the meadows beyond. Above us, the sky was beginning to shift from deep indigo to a pale, luminous gold.</p>
+
+  <figure>
+    <img src="https://picsum.photos/id/240/720/480" alt="Dark mountain landscape at dusk" width="720" height="480">
+    <figcaption>The mountains at dusk — large areas of shadow and dark rock</figcaption>
+  </figure>
+
+  <p>The ridge offered a panoramic view that made every step worthwhile. To the east, the sun was just cresting the horizon, painting the clouds in shades of amber and rose. To the west, the peaks stood in sharp silhouette against the fading night sky. It was a moment of perfect balance between darkness and light, between the world waking and the world still dreaming.</p>
+
+  <figure>
+    <img src="https://picsum.photos/id/274/720/480" alt="Rocky coastline with dark cliffs" width="720" height="480">
+    <figcaption>Coastal cliffs with deep shadows along the rock face</figcaption>
+  </figure>
+
+  <p>We sat on the rocks and ate breakfast in silence, watching the mist slowly dissolve as the sun grew stronger. A hawk circled lazily overhead, riding the thermals that rose from the warming earth below. The world was vast and indifferent and beautiful, and for a brief moment, we were simply part of it — no more or less significant than the hawk, the pine trees, or the stones beneath us.</p>
+
+  <figure>
+    <img src="https://picsum.photos/id/47/720/480" alt="Dark night sky over a lake" width="720" height="480">
+    <figcaption>Twilight reflections on still water — mostly dark tones</figcaption>
+  </figure>
+
+  <p>The descent was easier, though no less rewarding. The forest had come fully awake now, filled with birdsong and the rustle of small creatures in the underbrush. Wildflowers dotted the trailside — purple lupines, yellow buttercups, the occasional splash of red from a wild rose. Each turn in the path revealed a new composition of light and color, as though the forest were an gallery with infinite rooms.</p>
+
+  <figure>
+    <img src="https://picsum.photos/id/304/720/480" alt="Sunlit meadow with wildflowers" width="720" height="480">
+    <figcaption>A sunlit meadow after the morning fog has cleared</figcaption>
+  </figure>
+
+  <p>By midday we were back at the trailhead, tired but content. The coffee from the thermos tasted better than anything a café could offer. We leaned against the car and watched other hikers set out, each one carrying their own quiet hopes for what the mountain might reveal to them. Some would find the view. Others would find something else entirely — a moment of stillness, a conversation with a stranger, the simple pleasure of putting one foot in front of the other.</p>
+
+  <figure>
+    <img src="https://picsum.photos/id/173/720/480" alt="Dark tunnel with light at the end" width="720" height="480">
+    <figcaption>Emerging from shadow into light — a recurring theme on the trail</figcaption>
+  </figure>
+
+  <p>That is, perhaps, the quiet lesson of any walk through the natural world: the destination matters less than the willingness to go. The mountain does not care whether you reach the summit. It only asks that you show up, pay attention, and let the world unfold at its own pace.</p>
+</article>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const mode = params.get('banner');
+  const banner = document.getElementById('banner');
+  const toolbar = document.getElementById('toolbar');
+  const showToolbar = params.has('toolbar');
+
+  let topOffset = 0;
+
+  if (showToolbar) {
+    toolbar.style.display = 'block';
+    topOffset = toolbar.offsetHeight;
+    document.body.style.paddingTop = topOffset + 'px';
+  }
+
+  if (mode === 'top' || mode === 'bottom') {
+    banner.style.display = 'block';
+    banner.classList.add(mode);
+    if (mode === 'top') {
+      banner.style.top = topOffset + 'px';
+      document.body.style.paddingTop = (topOffset + banner.offsetHeight) + 'px';
+    } else {
+      document.body.style.paddingBottom = banner.offsetHeight + 'px';
+    }
+  }
+</script>
+</body>
+</html>
