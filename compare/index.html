@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>eBike Marketplace — Product Listing</title>
+<style>
+  body { font-family: -apple-system, Helvetica, Arial, sans-serif; margin: 0; background: #f4f5f7; color: #1c1c1e; }
+  header { background: #1c1c1e; color: #fff; padding: 24px 32px; }
+  header h1 { margin: 0; font-size: 24px; }
+  header p { margin: 6px 0 0; color: #a1a1a6; font-size: 14px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; padding: 32px; max-width: 1200px; margin: 0 auto; }
+  .card { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.08); text-decoration: none; color: inherit; transition: transform .15s, box-shadow .15s; }
+  .card:hover { transform: translateY(-3px); box-shadow: 0 6px 18px rgba(0,0,0,0.12); }
+  .card .thumb { height: 160px; display: flex; align-items: center; justify-content: center; }
+  .card .body { padding: 16px; }
+  .store { font-size: 12px; text-transform: uppercase; letter-spacing: .5px; color: #8e8e93; margin-bottom: 4px; }
+  .name { font-size: 17px; font-weight: 600; margin: 0 0 8px; }
+  .price { font-size: 18px; font-weight: 700; color: #1c1c1e; }
+  .tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 10px; margin-left: 8px; vertical-align: middle; }
+  .tag.fly { background: #e8f0ff; color: #1f5eff; }
+  .tag.dive { background: #e0f7f4; color: #00897b; }
+</style>
+</head>
+<body>
+<header>
+  <h1>eBike Marketplace</h1>
+  <p>Comparing electric bikes across three independent stores</p>
+</header>
+
+<div class="grid">
+
+  <a class="card" href="voltride-cruiser-c3.html">
+    <div class="thumb" style="background:#eef2f7;">
+      <svg width="180" height="120" viewBox="0 0 180 120"><circle cx="45" cy="90" r="22" fill="none" stroke="#3a6ea5" stroke-width="5"/><circle cx="135" cy="90" r="22" fill="none" stroke="#3a6ea5" stroke-width="5"/><path d="M45 90 L80 50 L120 50 L135 90 M80 50 L95 90 M120 50 L95 90" fill="none" stroke="#1c3d5a" stroke-width="4"/><path d="M78 50 L70 40 L60 40" fill="none" stroke="#1c3d5a" stroke-width="4"/></svg>
+    </div>
+    <div class="body">
+      <div class="store">VoltRide</div>
+      <p class="name">Cruiser C3</p>
+      <span class="price">$1,499</span>
+    </div>
+  </a>
+
+  <a class="card" href="voltride-skyhawk-av1.html">
+    <div class="thumb" style="background:#e8f0ff;">
+      <svg width="180" height="120" viewBox="0 0 180 120"><circle cx="50" cy="80" r="18" fill="none" stroke="#1f5eff" stroke-width="5"/><circle cx="130" cy="80" r="18" fill="none" stroke="#1f5eff" stroke-width="5"/><path d="M50 80 L85 48 L118 48 L130 80 M85 48 L100 80" fill="none" stroke="#0a2a6b" stroke-width="4"/><path d="M20 40 L60 50 M120 50 L160 40" stroke="#1f5eff" stroke-width="3"/><path d="M30 38 L55 48 M125 48 L150 38" stroke="#7aa3ff" stroke-width="3"/></svg>
+    </div>
+    <div class="body">
+      <div class="store">VoltRide</div>
+      <p class="name">Skyhawk AV1 <span class="tag fly">✈ Flies</span></p>
+      <span class="price">$12,900</span>
+    </div>
+  </a>
+
+  <a class="card" href="voltride-trailmaster.html">
+    <div class="thumb" style="background:#f0efe8;">
+      <svg width="180" height="120" viewBox="0 0 180 120"><circle cx="45" cy="88" r="24" fill="none" stroke="#6b4f2a" stroke-width="6"/><circle cx="135" cy="88" r="24" fill="none" stroke="#6b4f2a" stroke-width="6"/><path d="M45 88 L82 48 L120 48 L135 88 M82 48 L96 88" fill="none" stroke="#3a2c14" stroke-width="5"/><path d="M80 48 L72 38 L62 38" fill="none" stroke="#3a2c14" stroke-width="5"/></svg>
+    </div>
+    <div class="body">
+      <div class="store">VoltRide</div>
+      <p class="name">TrailMaster XT</p>
+      <span class="price">$3,250</span>
+    </div>
+  </a>
+
+  <a class="card" href="aquacycle-nautilus.html">
+    <div class="thumb" style="background:#e0f7f4;">
+      <svg width="180" height="120" viewBox="0 0 180 120"><circle cx="50" cy="82" r="20" fill="none" stroke="#00897b" stroke-width="5"/><circle cx="130" cy="82" r="20" fill="none" stroke="#00897b" stroke-width="5"/><path d="M50 82 L85 50 L118 50 L130 82 M85 50 L100 82" fill="none" stroke="#004d40" stroke-width="4"/><circle cx="40" cy="30" r="4" fill="#80cbc4"/><circle cx="60" cy="22" r="3" fill="#80cbc4"/><circle cx="150" cy="35" r="5" fill="#80cbc4"/><circle cx="125" cy="20" r="3" fill="#80cbc4"/></svg>
+    </div>
+    <div class="body">
+      <div class="store">AquaCycle</div>
+      <p class="name">Nautilus Deep <span class="tag dive">🌊 Dives</span></p>
+      <span class="price">$8,750</span>
+    </div>
+  </a>
+
+  <a class="card" href="boltco-velocity-gt.html">
+    <div class="thumb" style="background:#fbe9e7;">
+      <svg width="180" height="120" viewBox="0 0 180 120"><circle cx="48" cy="86" r="22" fill="none" stroke="#c62828" stroke-width="5"/><circle cx="132" cy="86" r="22" fill="none" stroke="#c62828" stroke-width="5"/><path d="M48 86 L84 50 L120 50 L132 86 M84 50 L98 86" fill="none" stroke="#7f0000" stroke-width="4"/><path d="M82 50 L74 40 L64 40" fill="none" stroke="#7f0000" stroke-width="4"/></svg>
+    </div>
+    <div class="body">
+      <div class="store">Bolt &amp; Co.</div>
+      <p class="name">Velocity GT</p>
+      <span class="price">$4,990</span>
+    </div>
+  </a>
+
+</div>
+</body>
+</html>
