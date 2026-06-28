@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ruby Specimen No. 7</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #1c0c06;
+    color: #f3d9c8;
+    font-family: 'Hoefler Text', Georgia, 'Times New Roman', serif;
+  }
+
+  /* Full-viewport WebGL canvas */
+  #gem {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    display: block;
+    touch-action: none;     /* pan gestures rotate the gem, never scroll/zoom */
+    cursor: grab;
+  }
+  #gem.dragging { cursor: grabbing; }
+
+  /* Banners — fixed, themed, safe-area aware (viewport-fit=cover) */
+  .banner {
+    position: fixed;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    text-align: center;
+    pointer-events: none;            /* don't steal drags from the canvas */
+    background: linear-gradient(var(--dir), rgba(20,8,4,0.85) 0%, rgba(20,8,4,0.45) 60%, rgba(20,8,4,0) 100%);
+  }
+
+  .banner.top {
+    --dir: to bottom;
+    top: 0;
+    padding: calc(env(safe-area-inset-top, 0px) + 18px) 24px 34px;
+  }
+  .banner.bottom {
+    --dir: to top;
+    bottom: 0;
+    padding: 34px 24px calc(env(safe-area-inset-bottom, 0px) + 18px);
+  }
+
+  .banner .title {
+    font-size: 1.55rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: #f6e2d4;
+    text-shadow: 0 1px 12px rgba(0,0,0,0.6);
+  }
+  .banner .kicker {
+    display: block;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.32em;
+    color: rgba(220,120,110,0.8);
+    margin-bottom: 6px;
+  }
+  .banner .caption {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 0.82rem;
+    letter-spacing: 0.02em;
+    color: rgba(243,217,200,0.7);
+  }
+  .banner .caption .hint {
+    color: rgba(243,217,200,0.45);
+    font-style: italic;
+  }
+
+  /* Vertical toolbars — left = cut, right = material; safe-area aware */
+  .toolbar {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 8px;
+    background: rgba(20,8,4,0.55);
+    border: 1px solid rgba(220,150,120,0.18);
+    border-radius: 18px;
+    backdrop-filter: blur(10px) saturate(1.2);
+    -webkit-backdrop-filter: blur(10px) saturate(1.2);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    /* never exceed the area between the banners; scroll if cramped */
+    max-height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 200px);
+    overflow-y: auto;
+  }
+  .toolbar.left  { left:  calc(env(safe-area-inset-left, 0px)  + 12px); }
+  .toolbar.right { right: calc(env(safe-area-inset-right, 0px) + 12px); }
+
+  .toolbar .cap {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 0.5rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: rgba(220,150,120,0.65);
+    margin-bottom: 2px;
+  }
+
+  .tool-btn {
+    width: 46px;
+    min-height: 46px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.10);
+    background: rgba(255,255,255,0.04);
+    color: rgba(243,217,200,0.7);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 0.5rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    line-height: 1.15;
+    text-align: center;
+    padding: 4px 2px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .tool-btn:hover { background: rgba(255,255,255,0.09); }
+  .tool-btn.active {
+    border-color: rgba(255,190,160,0.85);
+    background: rgba(255,255,255,0.10);
+    color: #fff;
+  }
+
+  /* material swatches */
+  .tool-btn.swatch { padding: 0; }
+  .tool-btn .dot {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    box-shadow: inset 0 2px 5px rgba(255,255,255,0.45),
+                inset 0 -3px 6px rgba(0,0,0,0.45),
+                0 1px 3px rgba(0,0,0,0.5);
+  }
+  .tool-btn.swatch.active .dot {
+    box-shadow: inset 0 2px 5px rgba(255,255,255,0.55),
+                inset 0 -3px 6px rgba(0,0,0,0.45),
+                0 0 0 2px rgba(255,190,160,0.9);
+  }
+</style>
+</head>
+<body>
+
+<canvas id="gem"></canvas>
+
+<nav class="toolbar left" id="cuts" aria-label="Gem cut"></nav>
+<nav class="toolbar right" id="materials" aria-label="Gem material"></nav>
+
+<header class="banner top">
+  <span class="kicker">The Lapidary's Collection</span>
+  <span class="title">Ruby Specimen No.&nbsp;7</span>
+</header>
+
+<footer class="banner bottom">
+  <span class="caption">Burmese &ldquo;pigeon&rsquo;s blood&rdquo; — brilliant cut, 8.2&nbsp;ct &nbsp;·&nbsp; <span class="hint">drag to rotate</span></span>
+</footer>
+
+<script>
+"use strict";
+
+const canvas = document.getElementById('gem');
+const gl = canvas.getContext('webgl', { antialias: true, alpha: false, premultipliedAlpha: false })
+        || canvas.getContext('experimental-webgl');
+
+if (!gl) {
+  document.body.innerHTML = '<p style="padding:2rem;font-family:sans-serif">WebGL is not available in this browser.</p>';
+  throw new Error('WebGL unavailable');
+}
+
+// ---------------------------------------------------------------------------
+// Shaders
+// ---------------------------------------------------------------------------
+const VERT = `
+attribute vec2 aPos;
+void main() { gl_Position = vec4(aPos, 0.0, 1.0); }
+`;
+
+const FRAG = `
+precision highp float;
+
+uniform vec2  iResolution;
+uniform float iTime;
+uniform mat3  iRot;        // gem orientation from pan gesture
+uniform float uGemType;    // 0 round, 1 emerald, 2 marquise, 3 trillion
+uniform vec3  uTint;       // material absorption tint (what light survives)
+uniform float uIOR;        // material index of refraction
+uniform float uDisp;       // dispersion spread (fire)
+
+#define PI 3.14159265359
+
+// ---- value noise (for caustics) -----------------------------------------
+float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float noise(vec2 p){
+  vec2 i = floor(p), f = fract(p);
+  vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash(i + vec2(0,0)), hash(i + vec2(1,0)), u.x),
+             mix(hash(i + vec2(0,1)), hash(i + vec2(1,1)), u.x), u.y);
+}
+
+// Animated caustic web — domain-warped layered noise focused into bright veins.
+float caustic(vec2 p){
+  float t = iTime * 0.35;
+  vec2 q = p;
+  q += 0.6 * vec2(noise(p * 1.5 + t), noise(p * 1.5 - t + 4.3));
+  float c = 0.0, amp = 0.6, freq = 1.0;
+  for (int i = 0; i < 4; i++){
+    float n = noise(q * freq + vec2(t, -t) * (0.5 + freq * 0.1));
+    c += amp * pow(1.0 - abs(2.0 * n - 1.0), 3.0);   // ridged -> caustic veins
+    freq *= 1.9; amp *= 0.55;
+  }
+  return c;
+}
+
+// ---- brilliant-cut gem as a convex intersection of facet half-spaces ------
+// Returns signed distance; convex solids let us use max() over plane distances.
+float gemRound(vec3 p){
+  // outer bounding sphere keeps the march well-behaved
+  float d = length(p) - 1.25;
+
+  // table (flat top) + crown girdle
+  d = max(d, p.y - 0.42);
+
+  const int CROWN = 8;
+  for (int i = 0; i < CROWN; i++){
+    float a = (float(i) + 0.5) / float(CROWN) * 2.0 * PI;
+    // crown facets: angled inward toward the table
+    vec3 nC = normalize(vec3(cos(a), 0.95, sin(a)));
+    d = max(d, dot(p, nC) - 0.78);
+    // girdle facets: near-vertical belt
+    vec3 nG = normalize(vec3(cos(a), 0.12, sin(a)));
+    d = max(d, dot(p, nG) - 0.62);
+  }
+
+  // pavilion (pointed underside) converging to a culet
+  const int PAV = 8;
+  for (int i = 0; i < PAV; i++){
+    float a = (float(i)) / float(PAV) * 2.0 * PI;
+    vec3 nP = normalize(vec3(cos(a), -0.78, sin(a)));
+    d = max(d, dot(p, nP) - 0.5);
+  }
+  return d;
+}
+
+// Marquise: an elongated, pointed navette — the faceted round stretched on x.
+// Anisotropic scaling stays a valid (under)estimate when we multiply by min(scale).
+float gemMarquise(vec3 p){
+  vec3 s = vec3(1.75, 1.0, 0.62);
+  return gemRound(p / s) * 0.62;
+}
+
+// Emerald: rectangular step cut with cut corners (octagonal table) and a keel.
+float gemEmerald(vec3 p){
+  float rx = 0.60, rz = 0.82;
+  float d = dot(p, vec3( 1.0, 0.0, 0.0)) - rx;
+  d = max(d, dot(p, vec3(-1.0, 0.0, 0.0)) - rx);
+  d = max(d, dot(p, vec3( 0.0, 0.0, 1.0)) - rz);
+  d = max(d, dot(p, vec3( 0.0, 0.0,-1.0)) - rz);
+
+  // chamfered corners -> octagonal outline
+  float c = 0.62;
+  d = max(d, dot(p, normalize(vec3( 1.0, 0.0, 1.0))) - c);
+  d = max(d, dot(p, normalize(vec3(-1.0, 0.0, 1.0))) - c);
+  d = max(d, dot(p, normalize(vec3( 1.0, 0.0,-1.0))) - c);
+  d = max(d, dot(p, normalize(vec3(-1.0, 0.0,-1.0))) - c);
+
+  // table + crown step bevels
+  d = max(d, p.y - 0.36);
+  d = max(d, dot(p, normalize(vec3( 0.55, 1.0, 0.0))) - 0.52);
+  d = max(d, dot(p, normalize(vec3(-0.55, 1.0, 0.0))) - 0.52);
+  d = max(d, dot(p, normalize(vec3( 0.0, 1.0, 0.55))) - 0.60);
+  d = max(d, dot(p, normalize(vec3( 0.0, 1.0,-0.55))) - 0.60);
+
+  // pavilion converging downward to a keel
+  d = max(d, dot(p, normalize(vec3( 0.7,-1.0, 0.0))) - 0.50);
+  d = max(d, dot(p, normalize(vec3(-0.7,-1.0, 0.0))) - 0.50);
+  d = max(d, dot(p, normalize(vec3( 0.0,-1.0, 0.7))) - 0.56);
+  d = max(d, dot(p, normalize(vec3( 0.0,-1.0,-0.7))) - 0.56);
+  return d;
+}
+
+// Trillion: triangular brilliant — 3-fold crown/girdle/pavilion.
+float gemTrillion(vec3 p){
+  float d = length(p) - 1.3;
+  d = max(d, p.y - 0.40);
+  const int N = 3;
+  for (int i = 0; i < N; i++){
+    float a = float(i) / float(N) * 2.0 * PI + PI * 0.5;
+    vec3 nG = normalize(vec3(cos(a), 0.12, sin(a)));   // triangular girdle
+    d = max(d, dot(p, nG) - 0.66);
+    vec3 nC = normalize(vec3(cos(a), 0.95, sin(a)));   // crown facets
+    d = max(d, dot(p, nC) - 0.80);
+    vec3 nP = normalize(vec3(cos(a), -0.8, sin(a)));   // pavilion facets
+    d = max(d, dot(p, nP) - 0.52);
+  }
+  return d;
+}
+
+// Dispatch to the selected cut.
+float gemSDF(vec3 p){
+  if      (uGemType < 0.5) return gemRound(p);
+  else if (uGemType < 1.5) return gemEmerald(p);
+  else if (uGemType < 2.5) return gemMarquise(p);
+  else                     return gemTrillion(p);
+}
+
+vec3 gemNormal(vec3 p){
+  vec2 e = vec2(0.0009, 0.0);
+  return normalize(vec3(
+    gemSDF(p + e.xyy) - gemSDF(p - e.xyy),
+    gemSDF(p + e.yxy) - gemSDF(p - e.yxy),
+    gemSDF(p + e.yyx) - gemSDF(p - e.yyx)));
+}
+
+// March from outside until we hit the gem surface (returns t, or -1.0).
+float marchIn(vec3 ro, vec3 rd){
+  float t = 0.0;
+  for (int i = 0; i < 96; i++){
+    vec3 p = ro + rd * t;
+    float d = gemSDF(p);
+    if (d < 0.0008) return t;
+    t += d;
+    if (t > 8.0) break;
+  }
+  return -1.0;
+}
+
+// March while *inside* the gem to find the exit point (distance flips sign).
+float marchOut(vec3 ro, vec3 rd){
+  float t = 0.002;
+  for (int i = 0; i < 96; i++){
+    vec3 p = ro + rd * t;
+    float d = gemSDF(p);
+    if (d > -0.0008) return t;   // crossed back out
+    t -= d * 0.7;                // d is negative inside
+    if (t > 8.0) break;
+  }
+  return t;
+}
+
+// Background: dark brown, with a caustic light pool the gem appears to focus.
+vec3 background(vec3 rd){
+  vec3 base = mix(vec3(0.10, 0.045, 0.028), vec3(0.04, 0.018, 0.012),
+                  smoothstep(-0.3, 0.7, rd.y));
+  // map ray onto a plane-ish coordinate for the caustic field
+  vec2 uv = rd.xz / (abs(rd.y) + 0.55) * 1.6;
+  float c = caustic(uv * 2.2);
+  float pool = smoothstep(0.9, -0.2, rd.y);          // concentrate below horizon
+  vec3 stoneGlow = uTint * 2.0 + vec3(0.15, 0.06, 0.04);
+  vec3 light = mix(vec3(0.4, 0.15, 0.10), stoneGlow, c);
+  base += light * c * pool * 0.8;
+  // soft warm key glow upper-right
+  base += vec3(0.18, 0.09, 0.05) * pow(max(0.0, dot(rd, normalize(vec3(0.5, 0.6, 0.3)))), 6.0);
+  return base;
+}
+
+// material absorption tint now supplied via the uTint uniform
+
+// Trace a single wavelength through the gem (refract in, bounce, refract out).
+vec3 traceGem(vec3 ro, vec3 rd, float ior){
+  float tIn = marchIn(ro, rd);
+  if (tIn < 0.0) return background(rd);
+
+  vec3 pos = ro + rd * tIn;
+  vec3 nor = gemNormal(pos);
+
+  // surface reflection (Fresnel) reflects the environment
+  float fres = pow(1.0 - max(0.0, dot(-rd, nor)), 5.0);
+  fres = mix(0.04, 1.0, fres);
+  vec3 reflCol = background(reflect(rd, nor));
+
+  // refract into the gem
+  vec3 rdIn = refract(rd, nor, 1.0 / ior);
+  vec3 inside = ro + rd * tIn;
+  vec3 acc = vec3(0.0);
+  float through = 0.0;
+  float energy = 1.0;
+
+  for (int b = 0; b < 4; b++){
+    float tOut = marchOut(inside + rdIn * 0.003, rdIn);
+    vec3 exitP = inside + rdIn * 0.003 + rdIn * tOut;
+    vec3 exitN = -gemNormal(exitP);          // inward-facing normal at exit
+
+    // Beer-Lambert absorption tints the path deep red
+    float path = tOut;
+    vec3 absorb = exp(-path * (vec3(1.0) - uTint) * 3.2);
+    energy *= 0.92;
+
+    vec3 rdOut = refract(rdIn, exitN, ior);
+    if (dot(rdOut, rdOut) == 0.0){
+      // total internal reflection -> keep bouncing, sparkle builds up
+      rdIn = reflect(rdIn, exitN);
+      inside = exitP;
+      acc *= absorb;
+      continue;
+    }
+    // light escapes here
+    acc = background(rdOut) * absorb * energy;
+    through = 1.0;
+    break;
+  }
+
+  vec3 col = mix(acc, reflCol, fres);
+  // facet specular sparkle from the key light
+  vec3 L = normalize(vec3(0.55, 0.7, 0.4));
+  float spec = pow(max(0.0, dot(reflect(rd, nor), L)), 60.0);
+  col += vec3(1.0, 0.85, 0.7) * spec * 0.9;
+  // a touch of the material body color so it always reads as the stone
+  col = mix(col, col * uTint * 2.2 + uTint * 0.05, 0.35);
+  return col;
+}
+
+void main(){
+  vec2 uv = (gl_FragCoord.xy - 0.5 * iResolution.xy) / iResolution.y;
+
+  // camera
+  vec3 ro = vec3(0.0, 0.0, 3.2);
+  vec3 rd = normalize(vec3(uv, -1.7));
+
+  // apply gem rotation (rotate the ray into the gem's local frame)
+  vec3 roL = iRot * ro;
+  vec3 rdL = iRot * rd;
+
+  // chromatic dispersion: trace 3 slightly different IORs for fire/sparkle
+  vec3 col = vec3(
+    traceGem(roL, rdL, uIOR + uDisp).r,
+    traceGem(roL, rdL, uIOR        ).g,
+    traceGem(roL, rdL, uIOR - uDisp).b
+  );
+
+  // vignette + tone
+  float vig = smoothstep(1.4, 0.2, length(uv));
+  col *= mix(0.55, 1.0, vig);
+  col = col / (col + vec3(0.6));            // soft filmic-ish tonemap
+  col = pow(col, vec3(0.85));               // gentle contrast
+  gl_FragColor = vec4(col, 1.0);
+}
+`;
+
+// ---------------------------------------------------------------------------
+// GL plumbing
+// ---------------------------------------------------------------------------
+function compile(type, src){
+  const s = gl.createShader(type);
+  gl.shaderSource(s, src);
+  gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)){
+    throw new Error('Shader compile error: ' + gl.getShaderInfoLog(s));
+  }
+  return s;
+}
+
+const prog = gl.createProgram();
+gl.attachShader(prog, compile(gl.VERTEX_SHADER, VERT));
+gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FRAG));
+gl.linkProgram(prog);
+if (!gl.getProgramParameter(prog, gl.LINK_STATUS)){
+  throw new Error('Program link error: ' + gl.getProgramInfoLog(prog));
+}
+gl.useProgram(prog);
+
+const buf = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
+const aPos = gl.getAttribLocation(prog, 'aPos');
+gl.enableVertexAttribArray(aPos);
+gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+const uRes  = gl.getUniformLocation(prog, 'iResolution');
+const uTime = gl.getUniformLocation(prog, 'iTime');
+const uRot  = gl.getUniformLocation(prog, 'iRot');
+const uGemType = gl.getUniformLocation(prog, 'uGemType');
+const uTint    = gl.getUniformLocation(prog, 'uTint');
+const uIOR     = gl.getUniformLocation(prog, 'uIOR');
+const uDisp    = gl.getUniformLocation(prog, 'uDisp');
+
+// ---------------------------------------------------------------------------
+// Sizing
+// ---------------------------------------------------------------------------
+function resize(){
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const w = Math.floor(window.innerWidth  * dpr);
+  const h = Math.floor(window.innerHeight * dpr);
+  if (canvas.width !== w || canvas.height !== h){
+    canvas.width = w;
+    canvas.height = h;
+  }
+  gl.viewport(0, 0, w, h);
+  gl.uniform2f(uRes, w, h);
+}
+window.addEventListener('resize', resize);
+resize();
+
+// ---------------------------------------------------------------------------
+// Cut + material toolbars
+// ---------------------------------------------------------------------------
+const CUTS = ['Round', 'Emerald', 'Marquise', 'Trillion'];
+
+const MATERIALS = [
+  { name: 'Ruby',     tint: [0.72, 0.045, 0.09], ior: 1.76, disp: 0.020, css: 'radial-gradient(circle at 35% 30%, #ff6a7a, #b3122b 65%, #5e0312)' },
+  { name: 'Sapphire', tint: [0.06, 0.12, 0.62],  ior: 1.77, disp: 0.020, css: 'radial-gradient(circle at 35% 30%, #7da3ff, #1b3fb0 65%, #0a1c63)' },
+  { name: 'Emerald',  tint: [0.07, 0.55, 0.20],  ior: 1.58, disp: 0.018, css: 'radial-gradient(circle at 35% 30%, #7ff0a8, #1f9b4a 65%, #08491f)' },
+  { name: 'Amethyst', tint: [0.42, 0.16, 0.62],  ior: 1.54, disp: 0.022, css: 'radial-gradient(circle at 35% 30%, #c89bf0, #7a36b0 65%, #3a1259)' },
+  { name: 'Diamond',  tint: [0.92, 0.92, 0.95],  ior: 2.42, disp: 0.060, css: 'radial-gradient(circle at 35% 30%, #ffffff, #cdd8ff 60%, #97a6d6)' },
+];
+
+let cutIndex = 0, matIndex = 0;
+
+function applyCut(i){
+  cutIndex = i;
+  gl.uniform1f(uGemType, i);
+}
+function applyMaterial(i){
+  matIndex = i;
+  const m = MATERIALS[i];
+  gl.uniform3f(uTint, m.tint[0], m.tint[1], m.tint[2]);
+  gl.uniform1f(uIOR, m.ior);
+  gl.uniform1f(uDisp, m.disp);
+}
+
+function buildToolbar(container, items, capText, selectedIndex, isSwatch, onSelect){
+  const cap = document.createElement('div');
+  cap.className = 'cap';
+  cap.textContent = capText;
+  container.appendChild(cap);
+
+  const buttons = items.map((item, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'tool-btn' + (isSwatch ? ' swatch' : '');
+    btn.type = 'button';
+    if (isSwatch){
+      const dot = document.createElement('span');
+      dot.className = 'dot';
+      dot.style.background = item.css;
+      btn.appendChild(dot);
+      btn.title = item.name;
+    } else {
+      btn.textContent = item;
+    }
+    if (i === selectedIndex) btn.classList.add('active');
+    btn.addEventListener('click', () => {
+      buttons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      onSelect(i);
+    });
+    container.appendChild(btn);
+    return btn;
+  });
+}
+
+buildToolbar(document.getElementById('cuts'), CUTS, 'Cut', cutIndex, false, applyCut);
+buildToolbar(document.getElementById('materials'), MATERIALS, 'Stone', matIndex, true, applyMaterial);
+
+applyCut(cutIndex);
+applyMaterial(matIndex);
+
+// ---------------------------------------------------------------------------
+// Rotation matrix (yaw/pitch) from pan gesture, with inertia
+// ---------------------------------------------------------------------------
+let yaw = 0.6, pitch = -0.35;          // current orientation
+let velYaw = 0, velPitch = 0;          // inertia after release
+let dragging = false, lastX = 0, lastY = 0;
+
+function rotMatrix(yawA, pitchA){
+  const cy = Math.cos(yawA),   sy = Math.sin(yawA);
+  const cx = Math.cos(pitchA), sx = Math.sin(pitchA);
+  // R = Rx(pitch) * Ry(yaw), column-major for WebGL
+  return new Float32Array([
+    cy,        0,    -sy,
+    sx * sy,   cx,   sx * cy,
+    cx * sy,  -sx,   cx * cy
+  ]);
+}
+
+canvas.addEventListener('pointerdown', (e) => {
+  dragging = true;
+  velYaw = velPitch = 0;
+  lastX = e.clientX; lastY = e.clientY;
+  canvas.classList.add('dragging');
+  canvas.setPointerCapture(e.pointerId);
+});
+canvas.addEventListener('pointermove', (e) => {
+  if (!dragging) return;
+  const dx = (e.clientX - lastX) / window.innerHeight;
+  const dy = (e.clientY - lastY) / window.innerHeight;
+  lastX = e.clientX; lastY = e.clientY;
+  yaw   += dx * 3.0;
+  pitch += dy * 3.0;
+  pitch = Math.max(-1.4, Math.min(1.4, pitch));
+  velYaw = dx * 3.0;
+  velPitch = dy * 3.0;
+});
+function endDrag(e){
+  if (!dragging) return;
+  dragging = false;
+  canvas.classList.remove('dragging');
+  if (e && e.pointerId !== undefined && canvas.hasPointerCapture(e.pointerId)){
+    canvas.releasePointerCapture(e.pointerId);
+  }
+}
+canvas.addEventListener('pointerup', endDrag);
+canvas.addEventListener('pointercancel', endDrag);
+
+// ---------------------------------------------------------------------------
+// Render loop
+// ---------------------------------------------------------------------------
+const start = performance.now();
+function frame(now){
+  const t = (now - start) / 1000;
+
+  if (!dragging){
+    // inertia, then a slow idle spin once it settles
+    yaw   += velYaw;
+    pitch += velPitch;
+    pitch = Math.max(-1.4, Math.min(1.4, pitch));
+    velYaw   *= 0.94;
+    velPitch *= 0.94;
+    if (Math.abs(velYaw) < 0.0004) { yaw += 0.0025; }   // gentle auto-rotate
+    velPitch *= 0.94;
+  }
+
+  gl.uniform1f(uTime, t);
+  gl.uniformMatrix3fv(uRot, false, rotMatrix(yaw, pitch));
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
