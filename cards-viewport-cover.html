@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Safe-Area Insets — Four Hands</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  /* Full-viewport green card-table felt (CSS-generated, no external assets) */
+  #felt {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    /* table-vignette: lighter center fading to darker edges */
+    background:
+      radial-gradient(ellipse at 50% 45%, #2a8f5c 0%, #167044 45%, #0d4528 100%);
+  }
+  /* woven fabric grain via a tiled SVG turbulence noise, kept subtle */
+  #felt::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='120' height='120' filter='url(%23n)' opacity='0.5'/></svg>");
+    background-size: 120px 120px;
+    mix-blend-mode: overlay;
+    opacity: 0.10;
+    pointer-events: none;
+  }
+
+  /* ---- Face-down card back ------------------------------------------------ */
+  .card {
+    width: 58px;
+    aspect-ratio: 2.5 / 3.5;
+    border-radius: 7px;
+    background:
+      /* diamond lattice */
+      repeating-linear-gradient( 45deg, rgba(255,255,255,0.18) 0 2px, transparent 2px 11px),
+      repeating-linear-gradient(-45deg, rgba(255,255,255,0.18) 0 2px, transparent 2px 11px),
+      linear-gradient(145deg, #b6233b, #7d0e25);
+    border: 3px solid #f5efe6;
+    box-shadow:
+      inset 0 0 0 1px rgba(0,0,0,0.25),
+      0 4px 10px rgba(0,0,0,0.45);
+    flex: none;
+  }
+
+  /* ---- Hands: one per edge, offset by that side's safe-area inset --------- */
+  .hand {
+    position: fixed;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;   /* static page — never steal events */
+  }
+
+  /* horizontal hands fan with a small overlap */
+  .hand.top .card,
+  .hand.bottom .card { margin: 0 -10px; }
+  /* vertical hands lay the cards rotated to face inward, overlapping vertically */
+  .hand.left .card,
+  .hand.right .card { transform: rotate(90deg); margin: -10px 0; }
+
+  .hand.top {
+    top: 0; left: 0; right: 0;
+    padding-top: calc(env(safe-area-inset-top, 0px) + 12px);
+  }
+  .hand.bottom {
+    bottom: 0; left: 0; right: 0;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+  }
+  .hand.left {
+    left: 0; top: 0; bottom: 0;
+    flex-direction: column;
+    padding-left: calc(env(safe-area-inset-left, 0px) + 12px);
+  }
+  .hand.right {
+    right: 0; top: 0; bottom: 0;
+    flex-direction: column;
+    padding-right: calc(env(safe-area-inset-right, 0px) + 12px);
+  }
+
+  /* ---- Live inset readout (centered pill) -------------------------------- */
+  #readout {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 20;
+    display: flex;
+    gap: 14px;
+    padding: 12px 18px;
+    border-radius: 14px;
+    background: rgba(8, 30, 18, 0.62);
+    border: 1px solid rgba(255,255,255,0.16);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    color: #eafff2;
+    pointer-events: none;
+  }
+  #readout .ins {
+    text-align: center;
+    min-width: 46px;
+  }
+  #readout .lbl {
+    display: block;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: rgba(180, 240, 200, 0.7);
+    margin-bottom: 3px;
+  }
+  #readout .val {
+    font-size: 1.05rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* hidden probe: padding resolves the four env() values for read-back */
+  #probe {
+    position: fixed;
+    visibility: hidden;
+    pointer-events: none;
+    padding:
+      env(safe-area-inset-top, 0px)
+      env(safe-area-inset-right, 0px)
+      env(safe-area-inset-bottom, 0px)
+      env(safe-area-inset-left, 0px);
+  }
+</style>
+</head>
+<body>
+
+<div id="felt"></div>
+
+<div class="hand top"></div>
+<div class="hand right"></div>
+<div class="hand bottom"></div>
+<div class="hand left"></div>
+
+<div id="readout">
+  <div class="ins"><span class="lbl">TOP</span><span class="val" id="vTop">–</span></div>
+  <div class="ins"><span class="lbl">RIGHT</span><span class="val" id="vRight">–</span></div>
+  <div class="ins"><span class="lbl">BOTTOM</span><span class="val" id="vBottom">–</span></div>
+  <div class="ins"><span class="lbl">LEFT</span><span class="val" id="vLeft">–</span></div>
+</div>
+
+<div id="probe"></div>
+
+<script>
+"use strict";
+
+// Deal 5 face-down cards into each hand.
+const CARDS_PER_HAND = 5;
+for (const hand of document.querySelectorAll('.hand')) {
+  for (let i = 0; i < CARDS_PER_HAND; i++) {
+    hand.appendChild(Object.assign(document.createElement('div'), { className: 'card' }));
+  }
+}
+
+// env() values aren't readable on :root directly — read them back from the
+// computed padding of a hidden probe whose padding is set to the four insets.
+const probe = document.getElementById('probe');
+const out = {
+  Top: document.getElementById('vTop'),
+  Right: document.getElementById('vRight'),
+  Bottom: document.getElementById('vBottom'),
+  Left: document.getElementById('vLeft'),
+};
+
+function updateReadout() {
+  const cs = getComputedStyle(probe);
+  for (const side of ['Top', 'Right', 'Bottom', 'Left']) {
+    const px = Math.round(parseFloat(cs['padding' + side]) || 0);
+    out[side].textContent = px + 'px';
+  }
+}
+
+window.addEventListener('resize', updateReadout);
+window.addEventListener('orientationchange', updateReadout);
+updateReadout();
+</script>
+</body>
+</html>
