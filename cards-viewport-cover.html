@@ -12,6 +12,8 @@
     height: 100%;
     overflow: hidden;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --cw: 58px;        /* card width; card height is --cw * 1.4 (aspect 2.5/3.5) */
+    --overlap: 20px;   /* how much adjacent cards overlap, measured along the hand */
   }
 
   /* Full-viewport green card-table felt (CSS-generated, no external assets) */
@@ -37,7 +39,7 @@
 
   /* ---- Face-down card back ------------------------------------------------ */
   .card {
-    width: 58px;
+    width: var(--cw);
     aspect-ratio: 2.5 / 3.5;
     border-radius: 7px;
     background:
@@ -64,18 +66,23 @@
 
   /* horizontal hands fan with a small overlap */
   .hand.top .card,
-  .hand.bottom .card { margin: 0 -10px; }
-  /* vertical hands lay the cards rotated to face inward, overlapping vertically */
+  .hand.bottom .card { margin: 0 calc(var(--overlap) / -2); }
+  /* vertical hands face inward (rotated). A rotated card's visual height is the
+     card *width*, but it still reserves a card *height* (--cw * 1.4) slot in the
+     column — so pull the slots together to leave the same visible step as above. */
   .hand.left .card,
-  .hand.right .card { transform: rotate(90deg); margin: -10px 0; }
+  .hand.right .card {
+    transform: rotate(90deg);
+    margin: calc((var(--cw) - var(--overlap) - var(--cw) * 1.4) / 2) 0;
+  }
 
   .hand.top {
     top: 0; left: 0; right: 0;
-    padding-top: calc(env(safe-area-inset-top, 0px) + 12px);
+    padding-top: env(safe-area-inset-top, 0px);
   }
   .hand.bottom {
     bottom: 0; left: 0; right: 0;
-    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
   .hand.left {
     left: 0; top: 0; bottom: 0;
