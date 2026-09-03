@@ -99,14 +99,16 @@ modeEl.className = standalone ? 'standalone' : 'browser';
 document.getElementById('standalone').textContent = String(navigator.standalone);
 document.getElementById('ua').textContent = navigator.userAgent;
 
-// beforeprint is dispatched by WebPage::beginPrinting, i.e. only once the UI
-// process has actually started paginating through _WKWebViewPrintFormatter.
-// So it is the discriminator for this bug:
+// beforeprint is dispatched by WebPage::beginPrinting (WebPage.cpp:7164), which
+// computePagesForPrintingImpl calls unconditionally. It is the discriminator:
 //   beforeprint fires  -> the print sheet machinery was reached; failure is in
 //                         panel presentation (PrintKit / scene lookup).
 //   beforeprint silent -> the UI process bailed earlier (canPrint gate, print
-//                         queue gate, nil print formatter).
-window.addEventListener('beforeprint', () => log('  <- beforeprint fired'));
+//                         queue gate, or printFrame never reached the delegate).
+// The matching UI-process marker is RELEASE_LOG(Printing, "Begin printing."),
+// visible with: subsystem == "com.apple.WebKit" AND category == "Printing"
+let sawBeforePrint = false;
+window.addEventListener('beforeprint', () => { sawBeforePrint = true; log('  <- beforeprint fired'); });
 window.addEventListener('afterprint', () => log('  <- afterprint fired'));
 
 const printMedia = window.matchMedia('print');
@@ -114,10 +116,12 @@ printMedia.addEventListener('change', e => log(`  <- matchMedia('print') = ${e.m
 
 function run(name, fn) {
     log(`[${name}] calling print()…`);
-    // window.print() is a synchronous delayed-reply IPC to the UI process, so
-    // the elapsed time says what the UI process did:
-    //   ~0 ms      -> returned without presenting anything (silent early return)
-    //   sustained  -> the sheet was up and we waited for it to be dismissed
+    sawBeforePrint = false;
+    // NOTE: elapsed time here means nothing. Safari implements the legacy
+    // -_webView:printFrame:, so UIDelegate::UIClient::printFrame calls the
+    // completion handler as soon as that void method returns — the UI process
+    // never waits for the sheet. window.print() returns in ~0 ms whether
+    // printing worked or not. Only beforeprint is diagnostic.
     const t0 = performance.now();
     try {
         fn();
@@ -125,10 +129,18 @@ function run(name, fn) {
         log(`[${name}] THREW: ${e}`);
         return;
     }
-    const dt = Math.round(performance.now() - t0);
-    log(`[${name}] returned after ${dt} ms`);
-    if (dt < 50)
-        log(`  !! returned immediately — no print UI was presented`);
+    log(`[${name}] returned after ${Math.round(performance.now() - t0)} ms (not meaningful)`);
+
+    // WebPage::computePagesForPrintingImpl unconditionally calls beginPrinting,
+    // which dispatches beforeprint and logs RELEASE_LOG(Printing, "Begin
+    // printing."). Any real print reaches it, so silence here means the web
+    // content process was never asked to paginate.
+    setTimeout(() => {
+        if (sawBeforePrint)
+            log(`[${name}] VERDICT: pagination started — failure is later (panel presentation)`);
+        else
+            log(`[${name}] VERDICT: no beforeprint after 3 s — UI process never started printing`);
+    }, 3000);
 }
 
 log(`ready — display-mode: ${standalone ? 'standalone' : 'browser'}`);
