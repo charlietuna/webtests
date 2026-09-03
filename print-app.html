@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Print Test">
+<meta name="theme-color" content="#1c1c1e">
+<title>Print Test</title>
+<style>
+:root { color-scheme: light dark; }
+body {
+    font: -apple-system-body;
+    font-family: -apple-system, system-ui, sans-serif;
+    margin: 0;
+    padding: env(safe-area-inset-top) 1rem calc(env(safe-area-inset-bottom) + 1rem);
+}
+h1 { font-size: 1.4rem; }
+h2 { font-size: 1rem; margin: 1.5rem 0 0.5rem; }
+button {
+    font: inherit;
+    display: block;
+    width: 100%;
+    padding: 0.8rem;
+    margin-bottom: 0.5rem;
+    border: 0;
+    border-radius: 0.7rem;
+    background: #007aff;
+    color: #fff;
+}
+button.secondary { background: #8e8e93; }
+#mode { font-weight: 600; }
+#mode.standalone { color: #34c759; }
+#mode.browser { color: #ff9500; }
+table { border-collapse: collapse; width: 100%; font-size: 0.85rem; }
+th, td { text-align: left; padding: 0.15rem 0.4rem 0.15rem 0; vertical-align: top; }
+th { width: 9rem; color: #8e8e93; font-weight: 400; }
+#log {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 0.75rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+    background: rgba(127,127,127,0.15);
+    border-radius: 0.7rem;
+    padding: 0.6rem;
+    min-height: 8rem;
+    -webkit-user-select: text;
+    user-select: text;
+}
+iframe { width: 100%; height: 6rem; border: 1px solid #8e8e93; border-radius: 0.4rem; }
+@media print {
+    button, #log, h2, iframe, #hint { display: none; }
+    body::before { content: "PRINTED OUTPUT — if you can read this, printing worked."; font-size: 2rem; }
+}
+</style>
+</head>
+<body>
+
+<h1>window.print() test</h1>
+
+<table>
+    <tr><th>Display mode</th><td id="mode">…</td></tr>
+    <tr><th>navigator.standalone</th><td id="standalone">…</td></tr>
+    <tr><th>User agent</th><td id="ua"></td></tr>
+</table>
+
+<p id="hint">Add to Home Screen, launch from the icon, then compare against the same page in Safari.</p>
+
+<h2>Tests</h2>
+<button onclick="run('direct', () => window.print())">1 — window.print() from tap</button>
+<button onclick="run('twice', () => { window.print(); window.print(); })">2 — window.print() twice in a row</button>
+<button onclick="setTimeout(() => run('deferred', () => window.print()), 500)">3 — window.print() after 500 ms (no gesture)</button>
+<button onclick="run('subframe', () => frames[0].print())">4 — subframe print()</button>
+<button class="secondary" onclick="run('matchMedia', () => {})">5 — no-op (control)</button>
+<button class="secondary" onclick="document.getElementById('log').textContent = ''">Clear log</button>
+
+<h2>Subframe (for test 4)</h2>
+<iframe srcdoc="<body style='font:16px -apple-system'>Subframe content</body>"></iframe>
+
+<h2>Log</h2>
+<div id="log"></div>
+
+<script>
+const logEl = document.getElementById('log');
+
+function log(msg) {
+    const t = new Date().toISOString().substr(11, 12);
+    logEl.textContent += `${t}  ${msg}\n`;
+    logEl.scrollTop = logEl.scrollHeight;
+}
+
+// Which display mode are we actually in? A Home Screen web app reports
+// "standalone"; the same page in Safari reports "browser".
+const standalone = window.matchMedia('(display-mode: standalone)').matches;
+const modeEl = document.getElementById('mode');
+modeEl.textContent = standalone ? 'standalone (web app)' : 'browser (Safari)';
+modeEl.className = standalone ? 'standalone' : 'browser';
+document.getElementById('standalone').textContent = String(navigator.standalone);
+document.getElementById('ua').textContent = navigator.userAgent;
+
+// beforeprint is dispatched by WebPage::beginPrinting, i.e. only once the UI
+// process has actually started paginating through _WKWebViewPrintFormatter.
+// So it is the discriminator for this bug:
+//   beforeprint fires  -> the print sheet machinery was reached; failure is in
+//                         panel presentation (PrintKit / scene lookup).
+//   beforeprint silent -> the UI process bailed earlier (canPrint gate, print
+//                         queue gate, nil print formatter).
+window.addEventListener('beforeprint', () => log('  <- beforeprint fired'));
+window.addEventListener('afterprint', () => log('  <- afterprint fired'));
+
+const printMedia = window.matchMedia('print');
+printMedia.addEventListener('change', e => log(`  <- matchMedia('print') = ${e.matches}`));
+
+function run(name, fn) {
+    log(`[${name}] calling print()…`);
+    // window.print() is a synchronous delayed-reply IPC to the UI process, so
+    // the elapsed time says what the UI process did:
+    //   ~0 ms      -> returned without presenting anything (silent early return)
+    //   sustained  -> the sheet was up and we waited for it to be dismissed
+    const t0 = performance.now();
+    try {
+        fn();
+    } catch (e) {
+        log(`[${name}] THREW: ${e}`);
+        return;
+    }
+    const dt = Math.round(performance.now() - t0);
+    log(`[${name}] returned after ${dt} ms`);
+    if (dt < 50)
+        log(`  !! returned immediately — no print UI was presented`);
+}
+
+log(`ready — display-mode: ${standalone ? 'standalone' : 'browser'}`);
+</script>
+
+</body>
+</html>
