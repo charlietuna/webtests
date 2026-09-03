@@ -90,9 +90,12 @@ function log(msg) {
     logEl.scrollTop = logEl.scrollHeight;
 }
 
-// Which display mode are we actually in? A Home Screen web app reports
-// "standalone"; the same page in Safari reports "browser".
-const standalone = window.matchMedia('(display-mode: standalone)').matches;
+// On iOS, navigator.standalone is the reliable indicator of a Home Screen web
+// app. The (display-mode: standalone) media query has been observed reporting
+// "browser" inside a real iOS 27 web app, so do not trust it alone.
+const standalone = navigator.standalone === true;
+const displayMode = ['standalone', 'minimal-ui', 'fullscreen', 'browser']
+    .find(m => window.matchMedia(`(display-mode: ${m})`).matches) || 'unknown';
 const modeEl = document.getElementById('mode');
 modeEl.textContent = standalone ? 'standalone (web app)' : 'browser (Safari)';
 modeEl.className = standalone ? 'standalone' : 'browser';
@@ -143,7 +146,8 @@ function run(name, fn) {
     }, 3000);
 }
 
-log(`ready — display-mode: ${standalone ? 'standalone' : 'browser'}`);
+log(`ready — navigator.standalone: ${navigator.standalone}, display-mode: ${displayMode}`);
+log(standalone ? 'CONTEXT: Home Screen web app' : 'CONTEXT: Safari (not the web app)');
 </script>
 
 </body>
