@@ -62,6 +62,8 @@ iframe { width: 100%; height: 6rem; border: 1px solid #8e8e93; border-radius: 0.
 <table>
     <tr><th>Display mode</th><td id="mode">…</td></tr>
     <tr><th>navigator.standalone</th><td id="standalone">…</td></tr>
+    <tr><th>readyState</th><td id="ready">…</td></tr>
+    <tr><th>loadEventEnd</th><td id="loadend">…</td></tr>
     <tr><th>User agent</th><td id="ua"></td></tr>
 </table>
 
@@ -120,11 +122,18 @@ printMedia.addEventListener('change', e => log(`  <- matchMedia('print') = ${e.m
 function run(name, fn) {
     log(`[${name}] calling print()…`);
     sawBeforePrint = false;
-    // NOTE: elapsed time here means nothing. Safari implements the legacy
-    // -_webView:printFrame:, so UIDelegate::UIClient::printFrame calls the
-    // completion handler as soon as that void method returns — the UI process
-    // never waits for the sheet. window.print() returns in ~0 ms whether
-    // printing worked or not. Only beforeprint is diagnostic.
+
+    // LocalDOMWindow::print() silently defers (setting m_shouldPrintWhenFinishedLoading
+    // and never printing) when frame->loader().activeDocumentLoader()->isLoading().
+    // That produces no IPC at all, hence no logs from any process. Report the
+    // page's load state so we can tell that apart from a UI-process bail-out.
+    const nav = performance.getEntriesByType('navigation')[0];
+    log(`  loadState: readyState=${document.readyState} loadEventEnd=${nav ? Math.round(nav.loadEventEnd) : 'n/a'} inflight=${inFlightResources()}`);
+
+    // NOTE: elapsed time is only meaningful by comparison. Safari implements the
+    // legacy -_webView:printFrame:, so the completion handler fires as soon as
+    // that void method returns; a working print still blocks tens of ms because
+    // page-count setup happens inside it. ~1 ms means the delegate did nothing.
     const t0 = performance.now();
     try {
         fn();
@@ -132,22 +141,38 @@ function run(name, fn) {
         log(`[${name}] THREW: ${e}`);
         return;
     }
-    log(`[${name}] returned after ${Math.round(performance.now() - t0)} ms (not meaningful)`);
+    log(`[${name}] returned after ${Math.round(performance.now() - t0)} ms`);
 
     // WebPage::computePagesForPrintingImpl unconditionally calls beginPrinting,
     // which dispatches beforeprint and logs RELEASE_LOG(Printing, "Begin
-    // printing."). Any real print reaches it, so silence here means the web
-    // content process was never asked to paginate.
+    // printing."). Any real print reaches it, so silence means the web content
+    // process was never asked to paginate.
     setTimeout(() => {
         if (sawBeforePrint)
             log(`[${name}] VERDICT: pagination started — failure is later (panel presentation)`);
         else
-            log(`[${name}] VERDICT: no beforeprint after 3 s — UI process never started printing`);
+            log(`[${name}] VERDICT: no beforeprint after 3 s — printing never started`);
     }, 3000);
+}
+
+// Anything still loading keeps activeDocumentLoader()->isLoading() true.
+function inFlightResources() {
+    if (!performance.getEntriesByType) return '?';
+    return performance.getEntriesByType('resource').filter(r => r.responseEnd === 0).length;
 }
 
 log(`ready — navigator.standalone: ${navigator.standalone}, display-mode: ${displayMode}`);
 log(standalone ? 'CONTEXT: Home Screen web app' : 'CONTEXT: Safari (not the web app)');
+
+function refreshLoadState() {
+    const nav = performance.getEntriesByType('navigation')[0];
+    document.getElementById('ready').textContent = document.readyState;
+    document.getElementById('loadend').textContent =
+        nav ? (nav.loadEventEnd ? Math.round(nav.loadEventEnd) + ' ms' : '0 — LOAD NEVER COMPLETED') : 'n/a';
+}
+refreshLoadState();
+window.addEventListener('load', () => { log('load event fired'); setTimeout(refreshLoadState, 0); });
+setInterval(refreshLoadState, 1000);
 </script>
 
 </body>
