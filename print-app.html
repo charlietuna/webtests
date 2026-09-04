@@ -75,6 +75,7 @@ iframe { width: 100%; height: 6rem; border: 1px solid #8e8e93; border-radius: 0.
 <button onclick="setTimeout(() => run('deferred', () => window.print()), 500)">3 — window.print() after 500 ms (no gesture)</button>
 <button onclick="run('subframe', () => frames[0].print())">4 — subframe print()</button>
 <button class="secondary" onclick="run('matchMedia', () => {})">5 — no-op (control)</button>
+<button class="secondary" onclick="promptGateProbe()">6 — alert() probe (prompt gate)</button>
 <button class="secondary" onclick="document.getElementById('log').textContent = ''">Clear log</button>
 
 <h2>Subframe (for test 4)</h2>
@@ -159,6 +160,23 @@ function run(name, fn) {
 function inFlightResources() {
     if (!performance.getEntriesByType) return '?';
     return performance.getEntriesByType('resource').filter(r => r.responseEnd === 0).length;
+}
+
+// alert() and print() share the Page::arePromptsAllowed() gate; only print() is
+// additionally gated on Page::isControlledByAutomation(). alert() also blocks the
+// main thread until dismissed, so the elapsed time tells us whether it presented.
+//   alert appears    -> prompts allowed; print's silence is the automation gate
+//                       or something past chrome().print()
+//   alert also silent-> arePromptsAllowed() == false (leaked ForbidPromptsScope)
+function promptGateProbe() {
+    log('[alert] calling alert()…');
+    const t0 = performance.now();
+    alert('Prompt gate probe — tap OK.');
+    const dt = Math.round(performance.now() - t0);
+    log(`[alert] returned after ${dt} ms`);
+    log(dt < 50
+        ? '[alert] VERDICT: alert did NOT present — prompts are forbidden (arePromptsAllowed() == false)'
+        : '[alert] VERDICT: alert presented — prompt gate is fine, print fails for another reason');
 }
 
 log(`ready — navigator.standalone: ${navigator.standalone}, display-mode: ${displayMode}`);
